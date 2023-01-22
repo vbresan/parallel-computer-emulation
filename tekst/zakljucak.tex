@@ -1,0 +1,129 @@
+\chapter{Zakljuèak}
+
+Zahvaljujuæi aplikacijama èije izvoðenje zahtijeva sve vi¹e procesorskog
+vremena, emulacija paralelnog raèunala ima svoje opravdanje. Konkretni
+rezultati dobiveni kori¹tenjem realizirane biblioteke
+(tablica~\ref{tbl:matrice}
+na
+strani~\pageref{tbl:matrice})
+potvrðuju isplativost upotrebe takvog sustava. Naravno, oèito je da njegove
+prednosti dolaze do izra¾aja iskljuèivo u situacijama kada je primjena
+opravdana, odnosno kada je samo vrijeme obrade podataka veæe od vremena
+potrebnog da se ti isti podaci distribuiraju meðu procesima.
+
+
+\section{Smjernice buduæeg razvoja biblioteke}
+
+Sa svojih preko èetiri tisuæe linija
+k\^oda
+biblioteka je cjelovita u tolikoj mjeri koliko joj je to dozvolio naznaèeni
+rok. Sadr¾i osnovnu funkcionalnost potrebnu za emulaciju paralelnog
+raèunala te bi, s obzirom na postignute rezultate prikazane u prethodnom
+poglavlju, mogla pronaæi i jednostavniju praktiènu upotrebu. No, od ozbiljnih
+proizvoda na tom podruèju je dijeli dosta toga. Kroz ostatak ovog odjeljka
+izneseno je nekoliko osnovnih ideja kojima bi bilo posveæeno daleko vi¹e
+pa¾nje da je bilo vi¹e vremena. No s obzirom na dragocjenost ovog iskustva
+nije iskljuèena ni moguænost da u skorom vremenu te ideje budu i
+implementirane
+\ldots
+
+\subsection{Dizajn}
+
+Trenutni dizajn biblioteke je sasvim zadovoljavajuæ, no neke preinake bi
+itekako pridonijele boljoj organizaciji
+k\^oda
+i uèinile ga prikladnijim za upotrebu i u drugim projektima. Konkretno,
+u klasi
+\texttt{Process}
+i svim deriviranima iz nje, implementirane su aktivnosti koje iziskuju
+komunikacija i dijeljenom memorijom i TCP/IP-om. Idealno bi bilo kada bi se
+ove funkcionalnosti razdvojile u posebne module.
+
+Takoðer, kod klase
+\texttt{Process}
+se zbila stanovita dizajnerska pogre¹ka zbog koje je skrivanje njene
+implementacije
+(odjeljak~\ref{subsec:si})
+nepotpuno. Da bi se izbjegli
+\texttt{protected}
+atributi prijeko je potreban redizajn.
+
+
+\subsection{Implementacija dodatnih metoda}
+
+Premda je, po mom mi¹ljenju, postignuta jednostavnost suèelja, mo¾e se reæi da
+metode trenutno implementiranih klasa pru¾aju prije asketsko nego komotno 
+okru¾enje. Za svaku od implementiranih klasa, a poglavito za API, postoji jo¹
+hrpa metoda koje bi, da su implementirane, dodatno pojednostavnile
+kori¹tenje biblioteke. Jasno, njihov popis je predug da bi se ovdje navodio.
+
+\subsection{Komunikacija dijeljenom memorijom}
+
+Prema rezultatima iz prethodnog poglavlja, za odreðene primjene segment
+dijeljene memorije se pokazao nedovoljno velikim. Najbolje rje¹enje bi bilo da
+korisnik sam odabire velièinu ovog komunikacijskog kanala ovisno o vlastitoj
+procjeni. Takoðer, trenutni veliki nedostatak je i to ¹to, za razliku od
+komunikacije TCP/IP-om, postoji konaèno dozvoljena velièina poruke.
+Biblioteka bi djelovala ozbiljnije kada bi se poruke èija velièina nadma¹uje
+velièinu segmenta dijeljene memorije slale dio po dio te se na prijemnoj
+strani nazad sastavljale.
+
+\subsection{Dojava pogre¹ki}
+
+Premda je to u UNIX
+f\mbox{}ilozof\mbox{}iji
+posve uobièajena praksa, smatram da bi bilo
+bolje kada se poruke o korisnièkim pogre¹kama poèinjenim tijekom rada
+biblioteke ne bi ispisivale direktno na konzolu
+\texttt{cerr}.
+Ispis na konzolu bi mo¾da mogla biti jedna od moguæih opcija, dok bi za neku
+graf\mbox{}ièku
+aplikaciju bilo podesnije ispisivanje poruka npr.~na toèno odreðenim
+koordinatama zaslona. Ovoj moguænosti bi se moglo iziæi u susret uvoðenjem
+posebne klase koja bi pamtila tekstualne poruke o pogre¹kama, koje bi tada
+korisnik mogao prikazati na naèin kako on to ¾eli.
+
+\subsection{Signali}
+
+Da bi se izbjegli problemi koji mogu nastati zbog razlika meðu
+implementacija UNIX operacijskih sustava, za
+\textit{buðenje}
+procesa je kori¹ten signal
+\texttt{SIGUSR2}.
+Podesnije rje¹enje bi predstavljalo kori¹tenje
+\texttt{SIGIO}
+signala èime bi se
+\texttt{SIGUSR2}
+vratio na raspolaganje korisniku biblioteke. U nekoj buduæoj verziji bi se
+trebalo vi¹e pozabaviti i s ovim pitanjem.\newpage
+
+
+\section{Posljednja rijeè}
+
+Izrada ovog rada bila je dragocjeno iskustvo iz vi¹e razloga. Kroz taj proces
+su se sa¾ela i konkretizirala veæina predavanja s posljednje godine studija.
+
+Zahvaljujuæi samoj temi po prvi put sam se susreo s pojmovima i problemima
+vezanim uz paralelnu obradu podataka, pri èemu su mi posebno zadovoljstvo
+pru¾ala vlastita idejna rje¹enja.
+
+Zanimljivosti je takoðer pridonio i objektno orijentirani pristup èitavom
+problemu zbog kojega je moje dotada¹nje znanje vezano uz tu popularnu
+metodologiju uèinilo znatan korak naprijed. Ni¹ta manje nisu vrijedna ni
+iskustva s programskim jezikom C++. Jednako tako, kroz ovaj rad je realiziran
+moj do sada najveæi programerski projekt pa je na konkretnom primjeru mnogo
+toga nauèeno i o odr¾avanju
+k\^oda
+\textit{pod kontrolom}.
+
+Tijekom rada sam se pobli¾e upoznao i sa
+specif\mbox{}iènostima
+UNIX operacijskog
+sustava, kako promatranog s aspekta korisnika tako i s aspekta programera.
+Posljednje se poglavito odnosi na pojmove dijeljene memorije i signala.
+
+Kraj, tj.~formatiranje samog dokumenta zabavnijim je uèinio
+\LaTeX{}.\\
+
+Posljednju reèenicu u diplomskom radu æu iskoristiti da se zahvalim GNU
+projektu i ljudima koji stoje iza njega.

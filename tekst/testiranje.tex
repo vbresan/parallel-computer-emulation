@@ -1,0 +1,277 @@
+\chapter{Testiranje}
+
+\section{Uvod}
+
+Kori¹tenjem razvijene biblioteke napisan je niz programa namijenjen upravo
+njenom testiranju. Ovih ne¹to vi¹e od sedam stotina linija
+k\^oda
+dijelom slu¾i pronala¾enju pogre¹aka u biblioteci, a dijelom samom
+mjerenju njenih performansi. Kroz ostatak ovog poglavlja bit æe rijeèi
+iskljuèivo o posljednjim aplikacijama i rezultatima koji su njima dobiveni.
+
+\section{Mjerenje performansi biblioteke}
+
+Mjerenja su obavljena na raèunalima
+\texttt{lolek.fesb.hr}
+i
+\texttt{bolek.fesb.hr}
+od kojih je svako opremljeno sa po dva
+\textit{Intel PIII}
+procesora na 600 MHz, dok su meðusobno povezana 100Mb/s
+\textit{ethernet}-om. Testiranja su se nastojala obaviti na ¹to
+manje optereæenim strojevima, dakle kada je aktivnost drugih korisnika na
+njima bila minimalna.\\
+
+Za proraèune vremena ka¹njenja i propusnosti veze (u funkciji velièine poruke)
+kori¹teni su programi
+\texttt{bechmark}
+i
+\texttt{tcp\_benchmark},
+za komunikaciju dijeljenom memorijom odnosno TCP/IP-om respektivno.
+
+Programi
+\texttt{matrix}
+i
+\texttt{pmatrix}
+su napisani za ilustraciju opravdanosti emulacije paralelnog raèunala.
+
+Sva èetiri programa prilo¾ena su zajedno s
+k\^odom.
+
+
+\subsection{Vrijeme ka¹njenja poruke}
+
+Mjerenja su obavljena na naèin da je jedan proces, nakon ¹to bi poslao
+poruku, èekao da mu je drugi proces vrati. Da bi se dobili ¹to toèniji
+rezultati, ovaj postupak se ponavljao za svaku poruku po tisuæu puta.
+Mjerilo se ukupno utro¹eno vrijeme koje je tada dijeljenjem dalo vrijeme
+ka¹njenja poruke
+(slike~\ref{sl:shmem_bnch} i~\ref{sl:tcp_bnch}).
+Propusnost
+(slike~\ref{sl:shmem_bndw} i~\ref{sl:tcp_bndw})
+je dobivena tako da se ovim vremenom podijelila velièina poruke. S obzirom da
+je tijelo korisnièke poruke kod komunikacije dijeljenom memorijom ogranièeno,
+mjerenja su obavljena samo za velièine poruka od 0 do 2024 bajta.
+
+\subsubsection{Dijeljena memorija}
+\label{subsubsec:dm}
+
+Rezultate dobivene za dijeljenu memoriju ne treba posebno komentirati. Oni
+prvenstveno ovise brzinama izvoðenja standardnih funkcija za kopiranje
+blokova memorije. Jasno je da æe kopiranje biti br¾e ¹to je blok, odnosno
+korisnièka poruka manja. Ostatak utro¹enog vremena otpada na sinhronizaciju
+procesa i izmjenu konteksta. Bitno je samo jo¹ jednom naglasiti da se ovdje
+radi o situaciji u kojoj proces odmah nakon slanja poruke èeka na odgovor. Kada
+bi bilo rijeèi o uzastopnom slanju veæih poruka, s obzirom na ogranièenu
+velièinu dijeljenog spremnika, ovaj vid komunikacije bi mogao predstavljati i
+\textit{usko grlo}
+i to iz razloga uèestalijih sukoba procesa nastalih zbog istovremenog pristupa
+zajednièkom segmentu, odnosno zbog njihove ote¾ane sinhronizacije.\\
+
+
+\subsubsection{TCP/IP protokol}
+
+Slika~\ref{sl:tcp_bnch}
+zahtijeva poja¹njenje. Vidljivo je da male (od 0 do otprilike 600 bajtova) i
+velike (preko otprilike 1500 bajtova) poruke imaju veliko ka¹njenje, dok je
+ka¹njenje poruka srednje velièine znatno manje.
+
+Ka¹njenje malih poruka uvjetovano je
+\textit{delayed ACK}
+i
+\textit{Nagleovim algoritmom}
+te njihovom interakcijom, dok je ka¹njenje velikih poruka uvjetovano njihovom
+\textit{fragmentacijom}.\\
+
+\textit{Delayed ACK}
+algoritam djeluje tako da sprjeèava TCP u slanju potvrda primitka èim podaci
+pristignu na svoje odredi¹te. Umjesto toga, TCP sada èeka neko kratko vrijeme
+pa tek onda ¹alje potvrdu. Naime, za oèekivati je da æe se u ovom vremenskom
+intervalu pojaviti podaci koje treba poslati nazad na drugi kraj veze. Tada bi
+se potvrda primitka poslala zajedno s tim podacima i na taj bi se naèin
+izbjegao prijenos jednog dodatnog TCP segmenta.
+
+Svrha Nagleovog algoritma je da se, zbog poveæanja iskoristivosti, smanji broj
+malih paketa na mre¾i. Ovaj algoritam nala¾e da se nekom vezom ne ¹alju mali
+paketi sve dok ne pristignu potvrde primitka za sve do tada poslane podatke.
+
+Dakle, u na¹em sluèaju situacija je sljedeæa. TCP/IP vezom server klijentu
+prvo ¹alje zaglavlje poruke na temelju kojeg klijent odreðuje koliko jo¹
+bajtova saèinjava tijelo poruke. Po¹to klijent serveru u meðuvremenu ne ¹alje
+nikakve podatke, zbog
+\textit{delayed ACK}
+algoritma neko vrijeme izostaje potvrda primitka zaglavlja poruke. Dok traje
+ovaj vremenski interval, server zbog Nagleovog algoritma ne ¹alje tijelo
+poruke jer ovo predstavlja mali paket. Da je rijeè o velikom paketu, ovaj bi
+se normalno poslao klijentu bez èekanja potvrde primitka zaglavlja poruke, kao
+¹to je sluèaj s porukama srednje velièine. Kada napokon istekne vremenski
+interval
+\textit{delayed ACK}
+algoritma, klijent ¹alje potvrdu primitka zaglavlja poruke pa server tek tada
+¹alje njeno tijelo.\\
+
+Maksimalna velièina paketa koja se prenosi
+\textit{ethernet}-om
+iznosi 1500 bajtova. S obzirom da velièina TCP i IPv4 zaglavlja zajedno
+minimalno iznosi 40 bajtova, TCP segmenti su obièno veliki do 1460
+bajtova. Ako se ¹alje poruka veæa od TCP segmenta, tada se ona
+\textit{fragmentira}
+na blokove spomenute velièine te se dalje mre¾om prenosi dio po dio, pa je
+stoga potrebno i vi¹e vremena za njen prijenos.
+Slika~\ref{sl:tcp_bnch}
+zorno ilustrira ovu situaciju. Skok u ka¹njenju jasno je vidljiv kod velièine
+poruke koja odgovara TCP segmentu. Konkretno, prijenos poruka koje nisu
+zahtijevale fragmentaciju bio je trostruko br¾i od ovih fragmentiranih.
+
+
+\begin{figure}[p]
+\begin{center}
+\includegraphics{shmem_bnch}
+\end{center}
+\caption{Ka¹njenje poruke kod komunikacije dijeljenom memorijom}
+\label{sl:shmem_bnch}
+\end{figure}
+
+
+\begin{figure}[p]
+\begin{center}
+\includegraphics{tcp_bnch}
+\end{center}
+\caption{Ka¹njenje poruke kod komunikacije TCP/IP-om}
+\label{sl:tcp_bnch}
+\end{figure}
+
+
+\begin{figure}
+\begin{center}
+\includegraphics[]{shmem_bndw}
+\end{center}
+\caption{Propusnost dijeljene memorije}
+\label{sl:shmem_bndw}
+\end{figure}
+
+
+\begin{figure}
+\begin{center}
+\includegraphics[]{tcp_bndw}
+\end{center}
+\caption{Propusnost TCP/IP-a}
+\label{sl:tcp_bndw}
+\end{figure}
+
+\newpage
+\subsection{Primjer: mno¾enje matrica}
+
+Za ilustraciju opravdanosti emulacije paralelnog raèunala, kori¹tenjem
+razvijene biblioteke, realizirana je aplikacija namijenjena mno¾enju matrica.
+Matrice su saèinjavali brojevi (s pomiènim zarezom) jednostruke preciznosti.
+Da bi se poveæao broj operacija nad ovim tipom podatka i na taj se naèin
+istaklo vrijeme proraèuna nad vremenom prijenosa matrice, tra¾io se rezultat
+izraza
+$ \log A^{m \times n} \times \log B^{n \times m}$.
+Dobivena vremena proraèuna za zadane dimenzije matrica i broj procesa
+ukljuèenih u obradu prikazana su u
+tablici~\ref{tbl:matrice}.
+Za sluèajeve kada se emuliralo paralelno raèunalo, mno¾enje matrica se
+obavljalo na naèin da je
+\textit{master}
+proces svim pokrenutim
+\textit{slave}-ovima
+prvo prenio èitavu drugu (B) matricu i to stupac po stupac, zatim im podijelio
+retke prve (A) matrice i naposljetku èekao rezultate proraèuna, odnosno retke
+konaène matrice.
+
+\subsubsection{\textit{local}}
+
+Prvi (referentni) stupac sadr¾i vremena potrebna za obavljanje zadatka
+lokalno, na jednom procesoru. Za primijetiti je da ovaj primjer daje
+optimalno vrijeme proraèuna za mali broj operacija.
+
+\subsubsection{\textit{2 $ \times $ ShMem}}
+
+U drugom stupcu navedeni su rezultati proraèuna izvedenog takoðer na jednom
+raèunalu, ali su sada mno¾enje obavljala dva procesa vezana dijeljenom
+memorijom. Dakle, u ovom sluèaju obrada je uposlila oba raspolo¾iva procesora.
+Iz tablice je vidljivo da su za mali broj podataka (tj.~operacija s pomiènim
+zarezom) postignuti lo¹i rezultati iz razloga ¹to je prijenos podataka oduzeo
+vi¹e vremena od samog proraèuna. Za veæe dimenzije matrica to nije bio sluèaj,
+pa su se ovdje mno¾enja obavljala u vremenskim intervalima kraæima i do
+49\%
+od ekvivalentnog referentnog primjera.
+
+\subsubsection{\textit{2 $ \times $ TCP}}
+
+U sljedeæem stupcu navedeni su rezultati proraèuna u kojem su se koristili
+resursi oba raèunala. Na jednom se nalazio
+\textit{master}
+proces, koji bi pokrenuo druga dva
+\textit{slave}
+procesa na udaljenom raèunalu te s njima ostvario vezu TCP/IP-om. Iz
+rezultata je vidljivo da je za mali broj podataka ova kombinacija najsporija
+¹to nije iznenaðenje s obzirom da je potrebno najvi¹e vremena za ostvarivanje
+veza, inicijalizaciju procesa i sami prijenos malih paketa. Kod velièine
+preno¹enih stupaca matrice za koju TCP/IP ima najveæu propusnost
+(slika~\ref{sl:tcp_bndw})
+postignuti su rezultati bolji od prethodnog sluèaja u kojem se komunikacija
+obavljala dijeljenom memorijom. Osim najveæe propusnosti TCP/IP-a, ovo vrijeme
+(duplo kraæe od referentnog) je postignuto i zbog toga ¹to je
+\textit{master}
+proces izoliran na jednom raèunalu i svojim izvoðenjem ne usporava sami
+proraèun koji se u potpunosti obavlja na drugom raèunalu. Rezultati dobiveni
+za veæe dimenzije matrica usporedivi su s onima iz prethodnog stupca iz
+razloga obja¹njenog u
+odjeljku~\ref{subsubsec:dm}.
+
+\subsubsection{\textit{2 $ \times $ TCP, 2 $ \times $ ShMem}}
+
+Ova kombinacija procesa dala je oèekivane rezultate za sve dimenzije
+matrica. Za male matrice vremena izvoðenja su bila izmeðu onih prikazanih u
+prethodna dva stupca. S obzirom da su sada u mno¾enju sudjelovala sva èetiri
+raspolo¾iva procesora, vrijeme proraèuna u najboljem sluèaju je skraæeno na
+svega
+26\%
+onog referentnog.
+
+
+
+\begin{table}
+\begin{center}
+\begin{tabular}{|c||c|c|c|c|}
+\hline
+$ m \times n $     & local  & 2 $ \times $ ShMem & 2 $ \times$ TCP  & 2 $\times$ TCP, 2 $ \times$ ShMem \\
+\hline
+\hline
+$ 3 \times 4   $   & 0      & 0.01               & 0.21 	    & 0.19   \\
+\hline
+$ 30 \times 40 $   & 0.04   & 0.03  		 & 0.23 	    & 0.21   \\
+\hline
+$ 30 \times 80 $   & 0.08   & 0.06  		 & 0.24 	    & 0.21   \\
+\hline
+$ 60 \times 80 $   & 0.32   & 0.21  		 & 0.36	 	    & 0.38   \\
+\hline
+$ 60 \times 120 $  & 0.49   & 0.29  		 & 0.44 	    & 0.33   \\
+\hline
+$ 90 \times 120 $  & 1.09   & 0.62  		 & 0.88 	    & 0.52   \\
+\hline
+$ 90 \times 240 $  & 2.18   & 1.17  		 & 1.41 	    & 0.89   \\
+\hline
+$ 180 \times 240 $ & 8.76   & 4.53  		 & 4.64 	    & 2.57   \\
+\hline
+$ 180 \times 340 $ & 12.42  & 6.37      	 & 6.52 	    & 3.61   \\
+\hline
+$ 280 \times 340 $ & 30.09  & 21    		 & 15.01 	    & 11.81  \\
+\hline
+$ 280 \times 440 $ & 38.82  & 27.07  		 & 19.34 	    & 15.85  \\
+\hline
+$ 380 \times 440 $ & 71.61  & 36.18  		 & 36.65 	    & 18.65  \\
+\hline
+$ 380 \times 500 $ & 81.26  & 41.42  		 & 41.75 	    & 22.65  \\
+\hline
+$ 500 \times 500 $ & 140.58 & 71.49 		 & 71.89 	    & 37.06  \\
+\hline
+\end{tabular}
+\end{center}
+\caption{Vrijeme (u s.)~potrebno za mno¾enje
+$\log A^{m \times n} \times \log B^{n \times m}$}
+\label{tbl:matrice}
+\end{table}

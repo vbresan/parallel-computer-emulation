@@ -1,0 +1,602 @@
+\chapter{Implementacija}
+
+\section{Uvod}
+
+S obzirom na velièinu projekta, izno¹enje postupka implementacije èitavog
+k\^oda
+oduzelo bi previ¹e prostora i vremena. Stoga æe u ovom poglavlju iskljuèivo
+biti rijeèi o problemima koji su tijekom implementiranja iziskivali vi¹e
+pa¾nje, poput postupka inicijalizacije novih procesa, komunikacije putem
+dijeljene memorije te komunikacije TCP/IP protokolom.
+
+
+\section{Inicijalizacija procesa}
+
+Postavlja se pitanje kako prilikom pokretanja proces zna da li mu je
+namijenjena uloga
+\texttt{MasterProcess}-a
+ili nekog od
+\texttt{SlaveProcess}-a.
+Ovo raspoznavanje je implementirano kori¹tenjem
+\textit{argumenata komandne linije}
+preko kojih svaki proces ispituje da li je pokrenut iz
+\textit{konzole}
+ili iz nekog drugog procesa. Naime
+\texttt{MasterProcess}
+kao jedan od argumenata komandne linije ostalim procesima prosljeðuje
+poseban znakovni niz koji izmeðu ostalog sadr¾i i njegov
+PID\footnote{Pojam PID-a je obja¹njen u odjeljku~\ref{subsec:pip}}.
+Tek pokrenuti proces usporeðuje taj primljeni PID s PID-om procesa koji ga je
+kreirao. Ako su oba broja ista, tada novi proces zna da mu je namijenjena uloga
+\texttt{SlaveProcess}-a.
+Sav ovaj postupak implementiran je, izmeðu ostalog, u inicijalizacijskoj
+funkciji
+\texttt{start\_new}.
+Ova funkcija prima tri parametra od kojih su prva dva parametri koje
+operacijski sustav prosljeðuje procesu (argumenti komandne linije) dok treæi
+parametar predstavlja pokazivaè na funkciju namijenjenu obradi korisnièkih
+poruka. Funkcija
+\texttt{start\_new}
+vraæa pokazivaè na kreirani objekt klase
+\texttt{MasterProcess}
+odnosno
+\texttt{SlaveProcess}.
+Preko ovog pokazivaèa vr¹e se svi daljnji pozivi metoda ovog objekta.
+Takoðer, kori¹tenjem posebnog brojaèa onemoguæeno je kreiranje vi¹e instanci
+ovih klasa po jednom procesu.
+
+
+\section{Izbjegavanje \textit{aktivnog èekanja}}
+
+Posve je moguæ scenarij u kojem jedan proces èeka drugog da ovaj obavi svoj
+posao. Najjednostavniju implementaciju ovog èekanja bi predstavljala iteracija
+u praznoj petlji. No mana ovog rje¹enja je u tome ¹to i iteriranje kroz praznu
+petlju predstavlja nekakvu aktivnost
+(tzv.~\textit{aktivno èekanje}),
+te se na taj naèin i dalje tro¹i procesorsko vrijeme koje bi drugi procesi
+znali bolje iskoristiti. Ovom problemu je doskoèeno na naèin da se proces
+koji èeka
+\textit{po¹alje na spavanje}
+pozivom standardne funkcije
+\texttt{usleep}
+koja kao parametar prima broj mikrosekunda koje æe proces provesti
+\textit{spavajuæi}.
+Pri implementaciji je kao parametar u svim pozivima ove funkcije kori¹tena
+jedinica ¹to je dovoljno da se prouzroèi
+izmjena konteksta\footnote{Upoznavanje s ovim pojmom je bilo u
+odjeljku~\ref{subsec:izm_kon}}.
+Kori¹tenje ove rutine mo¾e se primijetiti na
+slici~\ref{sl:lock}
+kod implementacije Dekkerovog algoritma obja¹njenog u
+odjeljku~\ref{subsec:dekker}.
+Takoðer, da bi se postigle bolje performanse, svaki proces nakon slanja poruke
+drugom procesu takoðer ¹alje i
+\textit{signal}\footnote{Pojam \textit{signala} je uveden u
+odjeljku~\ref{subsec:signali}}
+koji
+\textit{budi}
+primatelja u sluèaju da je ovaj
+\textit{na spavanju}.
+Kao signal je odabran
+\texttt{SIGUSR2}
+s obzirom da kod primanja
+\texttt{SIGIO}
+signala dolaze do izra¾aja razlike meðu implementacijama razlièitih verzija
+UNIX-a.
+
+
+\section{Detalji implementacije komunikacije dijeljenom memorijom}
+
+Najosnovnije crte komunikacije dijeljenom memorijom dane su u
+odjeljku~\ref{subsec:osn}
+na
+strani~\pageref{subsec:osn}.
+Slijedi ne¹to vi¹e o samim porukama i ostvarivanju veza izmeðu procesa.
+
+
+\subsection{Razmjena poruka}
+
+Veæ je bilo spomenuto da dijeljeni memorijski segment predstavlja dva
+\textit{cirkularna spremnika}. Procesi upisuju poruke svaki u svoj spremnik
+sve dok ne doðu do njegovog kraja. Tada se vraèaju opet na njegov poèetak i
+ponavljaju èitavu stvar s jednim izuzetkom - prilikom svakog sljedeæeg
+upisivanja procesi provjeravaju da li je poruka koja je u pro¹lom ciklusu
+bila upisana na tom mjestu proèitana. U sluèaju da nije, proces koji
+poku¹ava upisati novu poruku odgaða svoj naum sve dok se veæ upisana poruka
+ne proèita. S obzirom na izneseni problem, proces koji upisuje poruke mora
+pamtiti memorijske adrese na kojima se one nalaze da bi kasnije mogao
+provjeriti da li su dotiène poruke proèitane ili ne. Ovaj zadatak
+je jednostavno implementiran kori¹tenjem
+\textit{STL}\footnote{\textit{Standard Template Library}}
+\textit{container}-a
+zvanog
+\textit{deque}.
+Deque je struktura koju je najlak¹e doèarati ¹pilom karata. Karte
+najjednostavnije mo¾emo umetati i izbacivati iz ¹pila sa njegovog prednjeg ili
+stra¾njeg kraja. U ovom se sluèaju, kako se poruke upisuju, na kraj deque-a
+dodaju njihove memorijske adrese. Nakon ¹to je pro¹ao jedan èitav ciklus,
+prilikom svakog sljedeæeg upisivanja proces provjerava poruke na adresama
+koje se nalaze iskljuèivo na samom poèetku deque-a. Da li je odreðena poruka
+proèitana ili ne, procesi odreðuju na temelju jedne od varijabli iz
+zaglavlja poruke, koja je (zajedno s èitavim zaglavljem) opisana ne¹to ni¾e u
+tekstu.\\
+
+U trenutnoj implementaciji, poruke koje se razmjenjuju dijeljenom memorijom
+ogranièene su svojom velièinom. Cjelokupni segment dijeljene memorije velièine
+je jedne memorijske
+\textit{stranice}
+koja kod veæine UNIX implementacija iznosi èetiri kilobajta. Segment je
+prema~\ref{subsec:osn}
+podijeljen u dva dijela ¹to znaèi da cjelokupna poruka mo¾e maksimalno biti
+duga dva kilobajta. Od ova dva kilobajta 24 bajta otpadaju na zaglavlje
+poruke ¹to znaèi da korisnikovi podaci, odnosno tijelo poruke, mogu
+maksimalno biti dugi 2024 bajta
+(slika~\ref{sl:message}).
+Varijable
+\texttt{turn},
+\texttt{status[0]}
+i
+\texttt{status[1]}
+slu¾e za sinhronizaciju pristupa dijeljenoj memoriji. Naime, sasvim je moguæe
+da jedan proces zapoène s upisivanjem poruke, ali tada zbog izmjene konteksta
+(\ref{subsec:izm_kon})
+privremeno bude prekinut s radom te se umjesto njega nastavi izvr¹avati neki
+drugi proces. Redoslijed izmjene konteksta mo¾e biti upravo takav da proces
+koji èita poruke pristupi dijeljenoj memoriji i proèita poruku koja nije do
+kraja upisana, pa stoga ni valjana. Rje¹enje ovog problema i svrha ovih triju
+sinhronizacijskih varijabli detaljno su opisani u
+odjeljku~\ref{subsec:dekker}.
+Dakle, s obzirom da svaka poruka ima vlastite sinhronizacijske varijable,
+oèito je da je sinhronizacija realizirana na
+\textit{razini poruka},
+¹to znaèi da jedan proces mo¾e èitati jednu poruku dok u istom memorijskom
+segmentu drugi proces upisuje drugu poruku.
+
+Varijabla
+\texttt{fresh}
+je takoðer svojstvena komunikaciji putem dijeljene memorije. Nakon ¹to jedan
+proces upi¹e poruku, vrijednost ove varijable obavezno postavlja u jedinicu
+¹to znaèi da je poruka
+\textit{svje¾a},
+odnosno da jo¹ nije proèitana. Kada drugi proces proèita poruku, njeno mjesto
+u dijeljenoj memoriji popunjava nulama èime i vrijednost
+\texttt{fresh}
+varijable postavlja na nulu. Na ovaj naèin proces koji je upisao poruku mo¾e
+saznati da je ova proèitana te da na njeno mjesto mo¾e upisati novu, kao ¹to je
+veæ bilo opisano.
+
+Varijable
+\texttt{mid}
+(odnosno
+identif\mbox{}ikacijski
+broj poruke) i
+\texttt{len}
+(du¾ina tijela poruke) ne iziskuju daljnja poja¹njenja. Va¾no je samo
+napomenuti da procesi mogu razmjenjivati poruke du¾ine tijela od nula bajtova,
+dakle sama zaglavlja, pa je stoga na
+slici~\ref{sl:message}
+tijelo poruke, tj.~segment s podacima, prikazan u zagradama.\newpage
+
+\begin{figure}
+\begin{center}
+\includegraphics[]{message}
+\caption{Poruka upisana u dijeljenu memoriju}
+\label{sl:message}
+\end{center}
+\end{figure}
+
+
+\subsection{Kreiranje novog procesa}
+\label{subsec:knp}
+
+Objekt klase
+\texttt{MasterProcess},
+prije kreiranja
+\texttt{SlaveProcess}-a,
+s kojim ima namjeru ostvariti ovaj vid komunikacije, od operacijskog sustava
+zatra¾i da mu se dodijeli segment dijeljene memorije pozivajuæi funkciju
+\texttt{shmget}.
+Spomenuta funkcija vraæa
+identif\mbox{}ikator
+dijeljenog segmenta kojeg nadalje
+\texttt{MasterProcess}
+koristi kao argument funkcije
+\texttt{shmat}
+koja vr¹i mapiranje dijeljenog memorijskog segmenta na virtualni adresni
+prostor procesa
+(odjeljak~\ref{subsec:mem}
+na
+strani~\pageref{subsec:mem}).
+Nakon ¹to je segment mapiran popunjen je nepoznatim vrijednostima koje su se
+tog trenutka na¹le na tom mjestu u memoriji
+(tzv.~\textit{garbage value}).
+Zbog toga prije ièeg drugog,
+\texttt{MasterProcess}
+bri¹e sve ¹to se nalazi u mapiranom segmentu, toènije, sve vrijednosti u
+njemu postavlja na nule. Èitav ovaj proces na
+slici~\ref{sl:start_new}
+predstavlja
+\textit{korak 1}.
+Tek sada
+(\textit{korak 2})
+\texttt{MasterProcess}
+kreira novi objekt klase
+\texttt{SlaveProcess}
+kojemu prosljeðuje
+identif\mbox{}ikacijski
+broj segmenta dijeljene memorije kao
+jedan od
+\textit{argumenata komandne linije}.
+Nakon ¹to je
+\texttt{SlaveProcess}
+kreiran poziva funkciju
+\texttt{shmat}
+kojoj kao parametar prosljeðuje primljeni
+identif\mbox{}ikacijski
+broj èime se
+segment dijeljene memorije mapira i na virtualni adresni prostor
+\texttt{SlaveProcess}-a.
+Naposljetku,
+iskljuèivo da bi dojavio
+\texttt{MasterProcess}-u
+kako je kreiran te kako se uspje¹no
+\textit{prikaèio}
+na segment dijeljene memorije,
+\texttt{SlaveProcess}
+upravo tim segmentom ¹alje prvu poruku.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width = \textwidth]{start_new}
+\caption{Kreiranje novog procesa na istom raèunalu}
+\label{sl:start_new}
+\end{center}
+\end{figure}
+
+Va¾no je napomenuti da se funkcija za kreiranje dijeljenog memorijskog segmenta
+\texttt{shmget},
+te funkcija za mapiranje tog segmenta u virtualni adresni prostor procesa
+\texttt{shmat},
+pozivaju iz konstruktora klase
+\texttt{SharedMem}.
+Ovo znaèi da ih ni
+\texttt{MasterProcess}
+ni
+\texttt{SlaveProcess}
+ne pozivaju direktno, veæ kreiraju novi
+\texttt{SharedMem}
+objekt koji dalje sam vodi raèuna o èitavom postupku.
+
+
+\subsection{Stvaranje veze izmeðu dvaju \texttt{SlaveProcess}-a}
+
+S obzirom na centraliziranost sustava, svi
+\texttt{SlaveProcess}-i
+imaju vezu s
+\texttt{MasterProcess}-om,
+dok njihove meðusobne veze ne moraju, ali i mogu postojati.
+Za stvaranje veza izmeðu dvaju
+\texttt{SlaveProcess}-a
+zadu¾en je, naravno,
+\texttt{MasterProcess}.
+Ovaj proces prikazan je na
+slici~\ref{sl:croute}.
+Prije svega,
+\texttt{MasterProcess}
+obavje¹tava jedan o dvaju
+\texttt{SlaveProcess}-a
+o svojim namjerama
+(\texttt{korak 1}).
+Nakon toga,
+\texttt{SlaveProcess}
+veæ opisanim postupkom stvara te mapira na svoj virtualni adresni prostor
+novi memorijski segment
+(\textit{korak 2}).
+S obzirom da nema direktnih veza s drugim procesima,
+identif\mbox{}ikacijski
+broj
+memorijskog segmenta ¹alje
+\texttt{MasterProcess}-u
+(\textit{korak 3})
+koji ga prosljeðuje dalje drugom
+\texttt{SlaveProcess}-u
+(\textit{korak 4}).
+Konaèno, drugi
+\texttt{SlaveProcess}
+se
+\textit{kvaèi}
+za dijeljeni memorijski segment èiji je
+identif\mbox{}ikacijski
+broj upravo primio,
+te tim putem obavje¹tava prvog
+\texttt{SlaveProcess}-a
+o kraju uspje¹nog postupka ostvarivanja nove veze.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width = \textwidth]{croute}
+\caption{Kreiranje veze izmeðu dvaju \texttt{SlaveProcess}-a na istom raèunalu}
+\label{sl:croute}
+\end{center}
+\end{figure}
+
+
+\subsection{Dekkerov algoritam}
+\label{subsec:dekker}
+
+Za rje¹avanje moguæih sukoba izmeðu dvaju procesa koji se javljaju pri
+istovremenom pristupu dijeljenoj memoriji kori¹ten je
+\textit{Dekkerov algoritam}.
+Slijedi njegov kratak opis u kojem se zbog opæenitosti primjene algoritma
+operacija èitanja ili upisivanja u dijeljenu memoriju naziva
+\textit{kritiènim odjeljkom}.\\
+
+
+Za sinhronizaciju dvaju procesa Dekkerov algoritam koristi tri varijable.
+Ove tri varijable prikazane su na
+slici~\ref{sl:shm_lock_t}
+u strukturi
+\texttt{shm\_lock\_t}.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width = 0.7\textwidth]{shm_lock_t}
+\caption{Struktura \texttt{shm\_lock\_t}}
+\label{sl:shm_lock_t}
+\end{center}
+\end{figure}
+
+Varijabla
+\texttt{turn}
+mo¾e poprimiti dvije vrijednosti - nulu ili jedinicu, ovisno o tome koji
+od dvaju procesa ima pravo pristupa kritiènom odjeljku prilikom sukoba. U
+ovom primjeru, zbog bolje samodokumentacije
+k\^oda,
+umjesto nule i jedinice kori¹tene su simbolièke vrijednosti
+\texttt{writer}
+i
+\texttt{reader}
+(s obzirom da jedan od procesa iskljuèivo upisuje poruku u segment dijeljene
+memorije, dok drugi iz istog segmenta iskljuèivo èita poruke).
+Varijabla
+\texttt{status}
+je
+\textit{polje}
+od dvije logièke vrijednosti koje se inicijalno postavljaju na nulu. Kada
+bilo koji od dvaju procesa namjerava pristupiti kritiènom odjeljku, svoju
+varijablu
+\texttt{status}
+postavlja u jednicu. Iz istih razloga, opet nisu kori¹tene brojèane
+vrijednosti veæ simbolièke i to
+\texttt{unlocked}
+za nulu i
+\texttt{locked}
+za jedinicu.
+
+Algoritam prikazan na
+slici~\ref{sl:lock}
+je jednostavan ako samo jedan proces pristupa kritiènom odjeljku. U ovom
+sluèaju on postavlja svoju
+\texttt{status}
+varijablu na vrijednost
+\texttt{locked}
+i provjerava vrijednost
+\texttt{status}
+varijable drugog procesa. Ako je ovaj
+\texttt{unlocked},
+tada nema nikakvih sukoba u pristupu i prvi proces nesmetano ulazi u kritièan
+odjeljak.
+Ako drugi proces sada poku¹a pristupiti kritiènom odjeljku, otkrit æe da se
+u njemu trenutno nalazi prvi proces i vrtit æe se u unutra¹njoj ili vanjskoj
+\texttt{while}
+petlji, ovisno o vrijednosti varijable
+\texttt{turn},
+sve dok prvi proces ne napusti kritièan odjeljak.
+
+Kada oba procesa uðu u
+\texttt{lock}
+funkciju istovremeno da bi zatra¾ili pristup kritiènom odjeljku, oba æe
+postaviti svoju
+\texttt{status}
+varijablu stanje
+\texttt{locked}.
+Tada æe primijetiti da drugi proces takoðer poku¹ava ostvariti pristup
+kritiènom odjeljku i koristit æe varijablu
+\texttt{turn}
+da bi odredili koji ima pravo pristupa.
+\textit{Gubitnik}
+se povlaèi i vrti se u
+\texttt{while}
+petlji sve dok drugi ne zavr¹i. Kljuèni element ovog algoritma je da se iz
+\texttt{lock}
+funkcije ne izlazi sve dok vrijednost
+\texttt{status}
+varijable drugog procesa ne indicira da ovaj nema namjeru pristupiti kritiènom
+odjeljku.
+
+Prilikom izlaska iz kritiènog odjeljka proces poziva funkciju prikazanu na
+slici~\ref{sl:unlock}.
+I
+\texttt{status}
+i
+\texttt{turn}
+varijabla moraju se propisno postaviti tako da drugi proces bude u stanju da
+izaðe iz obje
+\texttt{while}
+petlje u
+\texttt{lock}
+funkciji.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width = 0.7\textwidth]{lock}
+\caption{Zahtijevanje pristupa kritiènom odjeljku}
+\label{sl:lock}
+\end{center}
+\end{figure}
+
+
+\begin{figure}
+\begin{center}
+\includegraphics[width = 0.7\textwidth]{unlock}
+\caption{Izlazak iz kritiènog odjeljka}
+\label{sl:unlock}
+\end{center}
+\end{figure}
+
+\newpage
+
+
+\section{Detalji implementacije komunikacije TCP/IP\\ protokolom}
+
+Implementacija ovog dijela biblioteke nije zahtijevala toliko truda koliko
+komunikacija dijeljenom memorijom s obzirom da se operacije èitanja i pisanja
+na TCP/IP vezu
+obavljaju pozivima standardnih funkcija
+\texttt{read}
+i
+\texttt{write}
+respektivno. Implementacija ovih dviju rutina je naravno skrivena pa se
+njihov korisnik uglavnom nema o èemu brinuti osim njihovog pravovremenog
+poziva.
+
+
+\subsection{Razmjena poruka}
+
+S obzirom na razlièitosti komunikacije TCP/IP-om i dijeljenom memorijom
+zaglavlje poruke vi¹e ne izgleda kako je prikazano na
+slici~\ref{sl:message}
+jer vi¹e nisu potrebne varijable za sinhronizaciju, a nije potrebna ni
+varijabla koja indicira da li je poruku proèitana ili ne.
+Dakle, zaglavlje poruka koje se prenose TCP/IP-om sadr¾i iskljuèivo polja
+\texttt{mid}
+i
+\texttt{len}.
+Proces koji prima sada prvo proèita zaglavlje poruke na temelju kojeg odluèi
+koliko jo¹ mora proèitati bajtova koji èine njeno tijelo.
+
+
+\subsection{Kreiranje novih procesa}
+
+Ovaj se postupak odvija na naèin slièan onom opisanom u
+odjeljku~\ref{subsec:knp},
+ali jednostavnije.
+\texttt{MasterProcess}
+prvo otkriva IP adresu stroja na kojem se nalazi. Nakon toga, od kernela
+zatra¾i da mu se dodijeli slobodan
+\textit{port}.
+Sada na dobivenoj adresi i port-u
+\texttt{MasterProcess}
+poèinje s
+\textit{oslu¹kivanjem},
+tj.~poèinje se pona¹ati kao
+\textit{server}
+èekajuæi na zahtjeve
+\textit{klijenata}
+za spajanjem.
+Dotle pokreæe
+\texttt{SlaveProcess}
+kojemu kao argumente komandne linije prosljeðuje svoju IP adresu i port.
+Pokrenuti
+\texttt{SlaveProcess}
+se sada spaja na server,
+tj.~\texttt{MasterProcess},
+koji naposljetku prihvaæa klijentov zahtjev. Ovdje nije potrebno nikakvo
+slanje inicijalnih poruka koje bi oznaèavale kraj uspje¹nog ostvarivanja
+veze jer je ova razmjena realizirana kroz
+\textit{three-way handshake}
+TCP protokola.
+
+
+\subsection{Funkcije \texttt{read} i \texttt{write}}
+
+Standardne funkcije
+\texttt{read}
+i
+\texttt{write}
+kori¹tene s
+\textit{deskriptorima veze}
+onakvima kakvi jesu,
+\textit{blokiraju}.
+To znaèi da ako proces pozove funkciju
+\texttt{read},
+a nema novih podataka dostupnih za èitanje, funkcija
+\textit{vraæa}
+tek kada pristignu novi podaci. Jednako tako, ako se pozove funkcija
+\texttt{write}
+dok je spremnik procesa koji bi trebao primiti podatke prepunjen,
+\texttt{write}
+blokira sve dok primatelj ne proèita ono ¹to mu se nalazi u spremniku èime
+ga oslobaða za upis novih podataka. Oèito je da ovaj problem mo¾e uvelike
+naru¹iti performanse aplikacije koja bi koristila biblioteku implementiranu na
+ovakav naèin. Problem je rije¹en na naèin da se funkcijom
+\texttt{fcntl}
+deskriptori veze postave za
+\textit{neblokirajuæe}.
+Sada pozivi funkcija
+\texttt{read}
+i
+\texttt{write}
+vraæaju odmah u sluèaju da ne mogu biti udovoljeni postavljajuæi globalnu
+varijablu
+\texttt{errno}
+u odgovarajuæe stanje
+(\texttt{EWOULDBLOCK},
+odnosno u nekim implementacijama
+\texttt{EAGAIN}).
+Stoga su ove dvije funkcije
+\textit{omotane}
+u rutinama koje se snose s ovim detaljem
+(slike~\ref{sl:readn}
+i~\ref{sl:writen}).
+
+
+\begin{figure}
+\begin{center}
+\includegraphics[width = \textwidth]{readn}
+\caption{\textit{Wrapper} \texttt{read} funkcija}
+\label{sl:readn}
+\end{center}
+\end{figure}
+
+\begin{figure}
+\begin{center}
+\includegraphics[width = \textwidth]{writen}
+\caption{\textit{Wrapper} \texttt{write} funkcija}
+\label{sl:writen}
+\end{center}
+\end{figure}
+
+
+Za primijetiti je da ove dvije
+\textit{wrapper}
+funkcije vode raèuna o jo¹ nekim detaljima. Jedan od njih je sluèaj u kojem
+primljeni
+\textit{signal}
+prekida poziv
+\texttt{read}
+ili
+\texttt{write}
+funkcije. Ovaj sluèaj se detektira zahvaljujuæi tome ¹to je
+\texttt{errno}
+postavljen na
+\texttt{EINTR}.
+Kada se ova situacija pojavi, potrebno je nanovo pozvati odabranu funkciju.
+Takoðer je moguæe i to da
+\texttt{read}
+ili
+\texttt{write}
+funkcija ne obave svoj posao u cijelosti. Npr.~od funkcije
+\texttt{read}
+mo¾emo zatra¾iti da proèita deset bajtova, a ova ih proèita pet iz razloga
+¹to ostalih pet jo¹ nije pristiglo do onog trenutka kada je funkcija pozvana.
+Ili ako npr.~od funkcije
+\texttt{write}
+zatra¾imo da upi¹e deset bajtova, a ova ih upi¹e samo pet iz razloga ¹to
+ostalih pet nije moglo stati u meðuspremnik. Bitno je naglasiti da su ova
+dva sluèaja razlièita od onih u kojima se opisuje blokiranje
+\texttt{read}
+i
+\texttt{write}
+funkcija iz razloga ¹to se ovdje ipak vr¹i neko (mada ne cjelovito) èitanje,
+tj.~upisivanje.

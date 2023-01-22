@@ -1,0 +1,219 @@
+\chapter{Osnovni pojmovi}
+
+\section{Operacijski sustav UNIX}
+
+
+UNIX je vi¹ekorisnièki,
+vi¹ezadaèni\footnote{Vi¹e o tome u
+pododjeljku~\ref{subsec:izm_kon}
+na
+strani~\pageref{subsec:izm_kon}}
+operacijski sustav koji pru¾a bogat skup razvojnih alata te visoki stupanj
+prenosivosti programa izmeðu implementacija razlièitih proizvoðaèa. Takoðer,
+sav operacijski sustav, naredbe i same biblioteke su napisane tako da budu
+jednostavno preno¹ene na razlièite strojeve, opslu¾ujuæi raznolikost
+hardverskih platformi na tr¾i¹tu.
+
+UNIX sustav je logièki podijeljen na 
+\textit{jezgru}
+ili
+\textit{kernel}
+i korisnièke programe
+(Slika~\ref{sl:ls_unix}).
+
+Svrha jezgre je upravljanje hardverom i pru¾anje suèelja s njim. Jezgra 
+takoðer osigurava korisnièkim programima skup usluga,
+\textit{sistemskih poziva}, 
+kojima se pristupa kori¹tenjem standardiziranih suèelja.
+Kernel svoj rad obavlja na 
+posebnom nivou gdje mo¾e izvoditi privilegirane operacije. Ovo pru¾a jezgri 
+potpunu kontrolu nad hardverom
+i korisnièkim programima, a takoðer i osigurava okru¾enje u kojem svi 
+programi koordinirano dijele postojeæi hardver.
+
+\begin{figure}
+\begin{center}
+\includegraphics[]{ls_unix}
+\end{center}
+\caption{Logièki slojevi UNIX sustava.}
+\label{sl:ls_unix}
+\end{figure}
+
+Korisnièke aplikacije, UNIX naredbe i biblioteke zajedno se nalaze na 
+korisnièkom, neprivilegiranom nivou. Programi korisnièkog nivoa se dakle 
+izvr¹avaju u ogranièenom okru¾enju, kontroliranom od strane kernela, koji 
+sprjeèava interferenciju programa koji se izvr¹avaju istovremeno.
+
+
+\subsection{Procesi i programi}
+\label{subsec:pip}
+
+Program je
+def\mbox{}iniran
+kao skup naredbi i podataka potrebnih za izvr¹avanje neke zadaèe. Proces je 
+kombinacija programa i trenutnog stanja njegovog izvr¹avanja, ¹to minimalno 
+ukljuèuje vrijednosti svih varijabli, stanje hardvera i sadr¾aj adresnog 
+prostora programa. Pojednostavljeno, proces je program u izvr¹avanju. Svaki 
+UNIX proces ima jedinstveni
+identif\mbox{}ikator
+zvan
+\textit{proces ID},
+ili kraæe,
+\textit{PID}.
+PID je uvijek pozitivna cjelobrojna vrijednost.
+
+
+\subsection{Mapiranje adresnog prostor procesa i\\ dijeljena memorija}
+\label{subsec:mem}
+
+Jezgra je odgovorna za mapiranje adresnog 
+(\textit{prividnog} ili
+\textit{virtualnog})
+prostora procesa na
+f\mbox{}izièki
+adresni prostor raèunala ¹to procesu daje privid da mu je na kori¹tenje dana 
+cjelokupna memorija raèunala. Kod veæine raèunala moguæe je da bilo koja 
+prividna memorijska
+\textit{stranica}
+bude
+\textit{mapirana}
+na bilo koju
+f\mbox{}izièku
+stranicu u memoriji. Na primjer, prividni adresni prostor procesa mo¾e biti
+mapiran kako je prikazano na 
+slici~\ref{sl:mapiranje}.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width = \textwidth]{mapiranje}
+\end{center}
+\caption{Primjer mapiranja adresnog prostora}
+\label{sl:mapiranje}
+\end{figure}
+
+Nije nu¾no da sve prividne memorijske stranice budu mapirane. Nemapirane
+stranice mogu predstavljati neiskori¹tene segmente u adresnom prostoru procesa 
+ili to mogu biti stranice koje trenutno nisu prisutne u memoriji, veæ se 
+nalaze
+npr.~na 
+\textit{hard disk}-u
+raèunala.
+
+Takoðer, proces ne mora koristiti sve
+f\mbox{}izièke
+stranice prisutne u memoriji. Ove stranice mogu biti dodijeljene drugim 
+procesima u sustavu ili uopæe ne  moraju biti kori¹tene. U svakom sluèaju, 
+proces koji se trenutno izvr¹ava ne  smije biti u moguænosti da im pristupi.
+
+Odreðene
+f\mbox{}izièke
+stranice mogu biti dijeljene izmeðu nekoliko procesa. U ovom sluèaju kernel 
+mapira prividnu stranicu vi¹e procesa na istu
+f\mbox{}izièku 
+stranicu. Ove stranice se najèe¹æe nazivaju
+\textit{segmentima dijeljene memorije}.
+Dijeljena memorija slu¾i kao mehanizam brze 
+komunikacije meðu procesima\footnote{\textit{interprocess communication (IPC)}}
+s obzirom da proces mo¾e slati podatke bez potrebe izvr¹avanja sistemskih
+poziva
+tj.~upletanja
+kernela u prijenos. Kada jedan proces upi¹e podatak u dijeljenu memoriju, taj
+je istog trena dostupan svim ostalim procesima koji dijele taj memorijski 
+segment, odnosno istu
+f\mbox{}izièku
+stranicu.
+
+\subsection{Izmjena konteksta}
+\label{subsec:izm_kon}
+
+Kod veæine modernih operacijskih sustava, pa tako i kod UNIX-a, procesi se
+izvr¹avaju
+\textit{kvaziparalelno} -
+vrijeme izvr¹avanja procesa podijeljeno je na kratke vremenske 
+odsjeèke, èija se obrada pravedno izmjenjuje s obradom vremenskih odsjeèaka 
+drugih trenutno pokrenutih procesa, ¹to korisnicima sustava daje privid da se
+samo njihov proces izvr¹ava na raèunalu. Ovaj èin, u kojem jezgra sustava
+trenutno prekida s izvr¹avanjem jednog procesa i zapoèinje s izvr¹avanjem 
+drugog, naziva se
+\textit{izmjena konteksta}.
+Ovaj pojam ukljuèuje pohranu stanja trenutnog procesa kako bi se ovaj
+kasnije nastavio, odabiranje novog procesa za izvr¹avanje i uèitavanje
+pohranjenog procesa u hardver.
+
+
+\subsection{Signali}
+\label{subsec:signali}
+
+Ako proces ¾elimo obavijestiti o nekom dogaðaju, tada mu mo¾emo poslati
+\textit{signal}.
+Na primjer, ako proces dijeli s nulom, jezgra ¹alje procesu signal èije je ime 
+\texttt{SIGFPE}.
+Nakon ¹to je primio signal, proces mo¾e postupiti na jedan od tri naèina: mo¾e
+dopustiti da se odigra predviðena akcija, mo¾e ignorirati signal ili pak
+tvorac programa mo¾e osigurati vlastitu rutinu koja bi se pozivala prilikom
+pojavljivanja odreðenog signala.
+
+
+\section{Internet komunikacija}
+\label{sec:internet}
+
+Uobièajeni naèin opisivanja arhitekture mre¾e je
+ISO-OSI\footnote{\textit{International Organization for Standardization - Open Systems
+Interconnection}}
+model za raèunalne komunikacije. Ovo je model sa sedam slojeva, a prikazan je
+na 
+slici~\ref{sl:isoosi}
+zajedno s pribli¾no preslikanim
+\textit{Internet Protocol Suite}-om\footnote{zajednièko ime za TCP/IP 
+protokol}.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width = \textwidth]{isoosi}
+\end{center}
+\caption{Slojevi u OSI modelu i \textit{Internet protocol suite}}
+\label{sl:isoosi}
+\end{figure}
+
+
+\subsection{TCP: \textit{Transmission Control Protocol}}
+
+TCP je protokol prijenosne razine Interneta - ostvaruje vezu izmeðu krajnjih
+korisnika. Rijeè je o spojevnom protokolu koji sadr¾i mehanizam kontrole
+pogre¹ki.
+
+Kada TCP ¹alje podatke na odredi¹te, zahtijeva potvrdu njihovog 
+primitka. S obzirom da sadr¾i algoritme za dinamièku procjenu
+\textit{ukupnog vremena obilaska}\footnote{\textit{round-trip time (RTT)}}
+izmeðu klijenta i servera zna koliko treba èekati na potvrdu primitka. Ako 
+potvrda ne pristigne, TCP automatski nanovo ¹alje podatke i èeka du¾i 
+vremenski rok. 
+
+TCP takoðer vr¹i numeraciju paketa koje ¹alje na odredi¹te. Ako paketi ne 
+pristignu na cilj redoslijedom kojim su poslani, primatelj ih presla¾e prije 
+prosljeðivanja aplikaciji. Ako odredi¹te sluèajno primi duple podatke, prema 
+brojevima paketa pronalazi koji su podaci duplicirani, te duplicirane segmente
+odbacuje.
+TCP osigurava i
+\textit{prozorsku kontrolu toka}.
+Uvijek obznanjuje svome sugovorniku koliko je bajtova spreman primiti.
+U bilo kojem trenutku prozor je velièina prostora trenutno slobodna u
+prijemnom spremniku. Prozor se mijenja s vremenom: kako pristi¾u podaci od
+po¹iljatelja, velièina prozora se smanjuje, a kako primajuæa aplikacija èita
+iz spremnika, prozor se poveæava.
+
+Konaèno, TCP veza je 
+\textit{dvosmjerna}
+¹to znaèi da aplikacija mo¾e slati i primati podatke u oba smjera bilo kada
+tijekom trajanja veze.
+
+
+\subsection{IP: \textit{Internet Protocol}}
+
+IP je protokol na mre¾noj razini Interneta koji rje¹ava adresiranje i
+dostupnost svakog raèunala prisutnog na mre¾i. Svako raèunalo jednoznaèno je
+odreðeno adresom koja je kod IPv4 protokola velika èetiri bajta, dok pojedinu
+uslugu na raèunalu (npr.~telnet ili ftp) odreðuje
+\textit{port}
+ili pozitivna brojèana vrijednost kodirana u dva bajta. Rijeè je o bespojnom
+protokolu, ¹to znaèi da ne sadr¾i mehanizme oporavka od pogre¹ke.

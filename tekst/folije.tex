@@ -1,0 +1,48 @@
+\documentclass[11pt,a4paper]{report}
+
+\usepackage[croatian]{babel}
+\usepackage[latin2]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage[dvips]{graphicx}
+
+\begin{document}
+\pagestyle{empty}
+
+\begin{figure}[p]
+\begin{center}
+\includegraphics{shmem_bnch}
+\end{center}
+\caption{Ka¹njenje poruke kod komunikacije dijeljenom memorijom}
+\label{sl:shmem_bnch}
+\end{figure}
+
+
+\begin{figure}[p]
+\begin{center}
+\includegraphics{tcp_bnch}
+\end{center}
+\caption{Ka¹njenje poruke kod komunikacije TCP/IP-om}
+\label{sl:tcp_bnch}
+\end{figure}
+
+
+\begin{figure}
+\begin{center}
+\includegraphics[]{shmem_bndw}
+\end{center}
+\caption{Propusnost dijeljene memorije}
+\label{sl:shmem_bndw}
+\end{figure}
+
+
+\begin{figure}
+\begin{center}
+\includegraphics[]{tcp_bndw}
+\end{center}
+\caption{Propusnost TCP/IP-a}
+\label{sl:tcp_bndw}
+\end{figure}
+
+
+\end{document}

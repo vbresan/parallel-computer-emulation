@@ -1,0 +1,105 @@
+\chapter{Uvod}
+
+
+Jedna od osnovnih karakteristika raèunalnog svijeta vjeèit je zahtjev 
+korisnika za ¹to
+\textit{sna¾nijim}
+strojevima po ¹to pristupaènijoj cijeni. Upravo iz korisnièke kupovne moæi
+proizi¹la je podjela na osobna i, po svojim performansama daleko ispred, 
+vi¹eprocesorska
+\textit{mainframe}
+raèunala. Dok se ova prva susreæu u svakodnevnom ¾ivotu, posljednja svojom 
+cijenom, pa stoga i ogranièenom proizvodnjom ostaju vezana uz dr¾avne 
+institucije, vojsku, sveuèili¹ta i istra¾ivaèke centre. Ovome se donekle 
+nastoji doskoèiti povezivanjem vi¹e jeftinijih raèunala u jedan sustav, te
+raspodjelom poslova meðu njima emulirati paralelno raèunalo.
+
+Svemu ovome novu dimenziju je dao
+\textit{Internet}
+meðusobno povezujuæi raèunala diljem svijeta. U posljednjih pet godina pojavio 
+se niz projekata koji su iskoristili ovu èinjenicu emulirajuæi veliko 
+paralelno raèunalo u kojem su poklanjajuæi svoje slobodno procesorsko vrijeme 
+sudjelovali korisnici osobnih raèunala iz cijeloga svijeta. Mo¾da je od svih 
+najpoznatiji projekt
+\textit{SETI}\footnote{\textit{Search for Extra-Terestrial Intelligence}, 
+projekt koji analizom radio signala pristiglih iz svemira nastoji dokazati 
+postojanje inteligentnog izvanzemaljskog ¾ivota}
+koji traje jo¹ i danas. Iako jo¹ nije rezultirao nikakvim konkretnim dokazima 
+o postojanju inteligentnog izvanzemaljskog ¾ivota,
+\textit{SETI}
+je objavio kako je do sada u projektu sudjelovalo vi¹e od 2.6 milijuna
+korisnika osobnih raèunala. Prema procjenama, ukupna raèunala snaga koja je 
+dobivena projektom je oko 15
+teraf\mbox{}lopsa,
+odnosno oko 15 tisuæa milijardi operacija s pomiènim zarezom u sekundi. Za 
+usporedbu, trenutno najjaèe svjetsko superraèunalo,
+\textit{IBM}-ov
+\textit{ASCI White},
+ima snagu od 12
+teraf\mbox{}lopsa,
+a cijena mu je 110 milijuna US dolara, dok je na cijeli
+\textit{SETI}
+projekt do sada potro¹eno samo oko 500,000 US dolara.
+\newpage
+
+Do sada je veæ razvijen èitav niz
+biblioteka\footnote{biblioteka - skup èesto kori¹tenih rutina}
+namijenjenih paralelnoj obradi podataka za razlièite raèunalne platforme.
+Mo¾da su najpopularnije od njih
+\textit{PVM - Parallel Virtual Machine}
+te
+\textit{MPI - Message Passing Interface}.\\
+
+S obzirom na ogranièen vremenski rok, jasno je da cilj ovog diplomskog rada
+nikako nije kreiranje jo¹ jedne od toliko cjelovitih biblioteka, veæ
+upoznavanje s problemima, moguæim rje¹enjima i programskim paradigmama koje
+se susreæu pri dizajniranju i implementaciji jednog od takvih sustava.
+Realizirana biblioteka minimalno bi trebala sadr¾avati slijedeæe moguænosti:
+\begin{itemize}
+\item
+pokretanje novih procesa
+\item
+prijevremeno prekidanje rada procesa i njihovo
+\textit{ga¹enje}
+\item
+stvaranje komunikacijskih veza meðu procesima
+\item
+razmjenu poruka meðu procesima
+\end{itemize}
+
+Sve navedene operacije trebale bi biti implementirane u dvije inaèice:
+za procese koji su odvijaju na istom raèunalu, te za procese na udaljenim
+raèunalima vezanim Internetom. Kao brz vid komunikacije meðu procesima
+odabrana je
+\textit{dijeljena memorija}
+(\ref{subsec:mem}).
+Za komunikaciju meðu
+\textit{udaljenim}
+procesima na prijenosnoj razini (zbog pouzdanosti) odabran je TCP nad UDP
+protokolom, a na mre¾noj razini jo¹ uvijek aktualan IPv4
+(\ref{sec:internet}).\\
+
+Daljnja smjernica u razvoju bi trebala biti jednostavnost korisnièkog suèelja,
+odnosno
+\textit{API}\footnote{\textit{Application Program Interface}}-ja
+za sve implementirane operacije. Ovo ne bi trebalo predstavljati problem s
+obzirom da je zadatak rada realizacija biblioteke u 
+\textit{objektno orijentiranom}
+programskom jeziku C++, dakle kori¹tenjem pristupa èija je svrha upravo
+odvajanje i skrivanje implementacije od njenog suèelja.\\
+
+Detaljniji opis èitavog problema nalazi se u
+odjeljku~\ref{subsec:osnovne}
+na
+strani~\pageref{subsec:osnovne}
+s obzirom da se na njega direktno oslanja èitav dizajn projekta.\\
+
+Razlog odabira UNIX platforme za realizaciju projekta sasvim je oèit. Rijeè
+je o operacijskom sustavu koji je daleko najzastupljeniji na Internetu, a uz
+to predstavlja i kompletno razvojno okru¾enje koje se isporuèuje zajedno sa
+svim moguæim programerskim alatima - od kompajlera, preko raznoraznih
+biblioteka i njihovih iscrpnih dokumentacija, pa sve do samih ureðivaèa
+programskog
+k\^oda.
+Sve navedeno dostupno je i za korisnike osobnih raèunala preko LINUX-a,
+UNIX kompatibilnog klona koji je uz to i potpuno besplatan.

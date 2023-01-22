@@ -1,0 +1,683 @@
+% poglavlje Dizajn
+
+\chapter{Dizajn}
+
+\section{Uvod}
+
+Pod pojmom 
+\textit{dizajna softvera} 
+podrazumijeva se postupak iznala¾enja naèina pretvaranja
+specif\mbox{}ikacije 
+programa u funkcionalni program. Bez obzira na odabranu metodologiju,
+strukturnu ili objektno orijentiranu, za ovaj proces karakteristièno je da se
+odvija na sljedeæim razinama:
+
+\begin{enumerate}
+\item
+razina:~razlaganje programa na podsustave i
+def\mbox{}iniranje
+suèelja meðu
+njima\footnote{S obzirom da je
+cilj ovog rada razvijanje biblioteke klasa namijenjenih realizaciji
+komunikacije izmeðu procesa, odnosno razvijanje samog podsustava nekog
+opse¾nijeg buduæeg programa, razumljivo je da je ova razina razlaganja 
+prilikom dizajna izostala.}
+\item
+razina:~razlaganje podsustava na module i opisivanje veza modula s ostatkom
+svijeta
+\item
+razina:~razlaganje modula na rutine i
+def\mbox{}iniranje
+toène sintakse poziva rutina
+\item
+razina:~unutra¹nje dizajniranje rutina
+\end{enumerate}
+
+Globalna slika koju dobivamo rje¹avajuæi pitanja na vi¹im razinama,
+poma¾e nam da detalje na ni¾im razinama sagledamo u pravom kontekstu.
+Detalji koje dobivamo rje¹avajuæi pitanja na ni¾im razinama, osiguravaju
+èvrstu podlogu za odluke na vi¹i razinama. Skakanje izmeðu vi¹ih i ni¾ih
+razina rezultira èvrstom strukturom koja je stabilnija od onih izgraðenih u
+cijelosti odozdo prema gore ili obratno. Stoga, dizajniranje je iterativan
+postupak temeljen na poku¹ajima i pogre¹kama.
+
+
+\section{Objektno orijentirano dizajniranje}
+\label{sec:ood}
+
+Osnovna karakteristika objektno orijentiranog dizajniranja je
+identif\mbox{}ikacija
+stvarnih i apstraktnih objekata koji se onda predstavljaju pomoæu objekata
+programskog jezika. Proces se sastoji od
+identif\mbox{}ikacije
+objekata i klasa objekata,
+identif\mbox{}ikacije
+operacija nad objektima i klasama, i naposljetku izgradnje sustava iz tih
+objekata, klasa i operacija.
+
+
+\subsection{Kljuène ideje}
+
+Objektno orijentirano dizajniranje zasniva se na pretpostavci da æe program
+biti to bolji ¹to je modeliran sliènije realnom problemu kojeg predstavlja.
+Koristi nekoliko ideja koje su bitne u suvremenom programiranju.
+
+
+\subsubsection{Objekti i klase}
+
+Bitna stvar u objektno orijentiranom dizajniranju je razlikovanje objekata i
+klasa. Objekt je dinamièka tvorevina sa
+specif\mbox{}iènim
+vrijednostima i
+atributima koji su vidljivi kada se program pokrene, dok je klasa statièna
+tvorevina koju vidimo kada pogledamo izvorni
+k\^od.
+Odnosno, objekt je
+specif\mbox{}ièni
+predstavnik neke klase.
+
+
+\subsubsection{Apstrakcija}
+
+Osnovna prednost apstrakcije je da omoguæava ignoriranje neva¾nih detalja i
+koncentriranje na bitne karakteristike.
+
+U strukturnom dizajniranju jedinica apstrakcije je
+\textit{funkcija}.
+U objektno orijentiranom dizajniranju, to je
+\textit{objekt}.
+Buduæi da objekt ukljuèuje i podatke i pripadajuæe funkcije, omoguæava
+rukovanje veæim segmentima problema nego ¹to su same funkcije. Ova èinjenica
+poveæava razinu apstrakcije na kojoj se mo¾e razmi¹ljati, ¹to znaèi da je
+moguæe intelektualno savladati veæe dijelove problema bez iziskivanja
+dodatnog napora.
+
+
+\subsubsection{Uèahurivanje}
+
+Pod pojmom uèahurivanja jedni smatraju èvrsto vezanje podataka i operacija nad
+njima u jednu cjelinu (u svrhu kreiranja novog tipa podatka), dok drugima taj
+pojam predstavlja skrivanje podataka od dijela
+k\^oda
+kojemu ti podaci nisu potrebni, odnosno skrivanje detalja implementacije.
+
+
+\subsubsection{Modularnost}
+
+Grupe srodnih zadataka i podataka grupiraju se u module koji bi trebali, u
+idealnom sluèaju, biti dobro povezani iznutra, a imati labave vanjske veze.
+Poput skrivanja informacija, cilj je
+def\mbox{}inirati
+takvo suèelje modula koje se neæe mijenjati iako se mijenja unutra¹njost
+modula.
+
+
+\subsubsection{Hijerarhija i nasljeðivanje}
+
+Pri dizajniranju softverskog sustava, èesto se nailazi na klase koje su
+jedne drugima vrlo sliène, izuzev nekoliko razlika.
+Def\mbox{}iniranje
+sliènosti i razlika meðu takvim klasama naziva se
+\textit{nasljeðivanje}.
+
+U objektnom programiranju, nasljeðivanje pojednostavljuje programiranje jer
+je moguæe napisati opæu rutinu za obavljanje bilo èega ¹to ovisi samo o
+opæim svojstvima neke klase objekata, a onda napisati specijalne rutine koje
+æe obavljati specijalne operacije na objektima specijalnih klasa
+\textit{deriviranih}
+iz opæe (ili
+\textit{bazne}).
+
+
+\subsection{Koraci objektno orijentiranog dizajna}
+\label{subsec:koraci_ood}
+
+Koraci navedeni dalje u tekstu ne moraju se nu¾no izvoditi redoslijedom u
+kojem su izneseni, a èesto se i ponavljaju. Iteracija je va¾na kod objektno
+orijentiranog dizajniranja kao i kod bilo kojeg drugog dizajnerskog pristupa.
+
+\begin{itemize}
+\item \textbf{Identif\mbox{}ikacija objekata i njihovih atributa.}\\
+Programi za raèunala se obièno zasnivaju na objektima iz realnog svijeta.
+Krenuv¹i od njih, apstrakcijom dolazimo do softverskih objekata i njihovih
+atributa.
+\item \textbf{Odreðivanje ¹to se mo¾e napraviti svakom objektu.}\\
+U ovom koraku dolazimo do metoda, odnosno operacija kojih obavljamo nad
+objektima pojedine klase.
+\item \textbf{Odreðivanje ¹to sve objekt mo¾e uèiniti drugim objektima.}
+\item \textbf{Odreðivanje dijelova svake klase koji æe biti vidljivi.}\\
+Jedna od kljuènih dizajnerskih odluka je
+identif\mbox{}iciranje
+dijelova klasa koji trebaju biti
+\textit{javni}
+i onih koji trebaju ostati
+\textit{privatni}.
+Ovu odluku treba donijeti i za podatke i za zadatke.
+\item \textbf{Def\mbox{}iniranje suèelja svake klase}\\
+Posljednji korak dizajniranja klasa je formalno, sintaktièko
+def\mbox{}iniranje
+suèelja svake klase, na razini programskog jezika. Ovo ukljuèuje zadatke
+koje objekt mo¾e izvr¹iti kao i nasljeðivanje odnosa izmeðu klasa objekata.
+Tipièno, ovo bi ukljuèivalo deklaracije funkcija ili procedura.
+\end{itemize}
+
+Nakon prolaska kroz sve korake i stvaranje globalne organizacije objektno
+orijentiranog sustava, postupak se ponavlja s dvostrukim ciljem. Ponavlja se
+organizacija sustava da bi se dobila bolja organizacija objekata i klasa, a
+takoðer se nanovo prolazi kroz sve
+def\mbox{}inirane
+klase i postupno se razraðuju detalji rje¹enja.
+
+
+\section{Konkretan problem}
+
+Dizajniranje konkretnog zadatka je teklo prema koracima navedenim u prethodnom
+odjeljku, no takav redoslijed i nije posve pogodan ¹to se tièe ¹to
+jednostavnijeg izno¹enja rezultata postupka.
+Èitav proces, zbog svog iterativnog karaktera, neæe biti prikazan u cijelosti, 
+veæ æe biti izneseno samo njegovo ``konaèno'' rje¹enje. Naravno (zahvaljujuæi 
+opet iterativnosti) pojam konaènog dizajna u softverskoj industriji oznaèava
+ne dosezanje krajnje savr¹enog, veæ sasvim funkcionalnog rje¹enja (i to u
+pravilu onog posljednjeg implementiranog prije isteka vremenskog roka
+predviðenog za isporuku proizvoda).
+
+
+\subsection{Osnovne smjernice}
+\label{subsec:osnovne}
+
+Dakle, cilj projekta je realizacija biblioteke klasa u programskom jeziku C++
+namijenjene emulaciji paralelnog raèunala na mre¾i radnih stanica.
+Ovdje je rijeè je o centraliziranom sustavu, ¹to znaèi da postoji jedan proces 
+koji ima
+\textit{ovlasti}
+veæe od ostalih, te upravlja njihovim radom, stvara ih i uni¹tava. Zbog toga,
+taj jedan
+\textit{master}
+proces ima vezu sa svim ostalim,
+\textit{slave}
+procesima, dok ti ostali procesi mogu, ali i ne moraju biti povezani s
+ostalim, takoðer
+\textit{slave}
+procesima. Ova situacija je prikazana na
+slici~\ref{sl:ms}.
+
+\begin{figure}
+\begin{center}
+\includegraphics[]{ms}
+\end{center}
+\caption{Prikaz centraliziranog sustava komunikacije}
+\label{sl:ms}
+\end{figure}
+
+©to se tièe same komunikacije, ona mo¾e biti realizirana na dva naèina:
+kori¹tenjem TCP/IP protokola
+(odjeljak~\ref{sec:internet}
+na
+strani~\pageref{sec:internet})
+za procese pokrenute na razlièitim raèunalima spojenim na Internet, ili putem 
+dijeljene memorije
+(odjeljak~\ref{subsec:mem}
+na
+strani~\pageref{subsec:mem})
+za procese pokrenute na istom raèunalu. 
+
+Dizajn komunikacije TCP/IP protokolom ne zahtijeva nikakva dodatna 
+obja¹njenja jer su njeni detalji na UNIX operacijskim sustavima skriveni nizom
+\textit{sistemskih poziva}.
+\label{subsec:osn}
+Nasuprot tome, komunikacija preko dijeljene memorije iziskuje da joj se
+posveti ne¹to vi¹e pa¾nje. Njena realizacija je prikazana na
+slici~\ref{sl:sha_mem}.
+
+\begin{figure}
+\begin{center}
+\includegraphics[]{sha_mem}
+\end{center}
+\caption{Komunikacija putem dijeljene memorije}
+\label{sl:sha_mem}
+\end{figure}
+
+Zbog jednostavnosti, cjelokupni segment dijeljene memorije je podijeljen u 
+dva dijela jednake velièine. Dok jedan proces upisuje poruke u jedan dio,
+èita ih iz drugog dijela memorije. Ovo isto vrijedi i za drugi proces samo ¹to 
+ovaj upisuje poruke u dio iz kojeg prvi èita, a èita ih iz dijela u kojeg ih 
+prvi proces upisuje. 
+
+Nadalje, poruka ne mora biti velièine èitavog segmenta u koji se upisuje, 
+odnosno iz kojeg se èita. Zbog toga, svaki proces koji komunicira dijeljenom
+memorijom ima po dva
+\textit{pokazivaèa} -
+jedan za pisanje, a drugi za èitanje. Nakon ¹to proces npr.~upi¹e poruku,
+pokazivaè za pisanje se pomièe na prvo sljedeæe slobodno mjesto u memoriji 
+koje je spremno primiti poruku. U sluèaju da je èitav segment memorije
+predviðen za upisivanje popunjen, pokazivaè se vraæa na poèetak segmenta
+gdje èeka da drugi proces oslobodi memoriju nakon ¹to proèita poruku. Na
+ovaj naèin je realiziran
+\textit{cirkularni spremnik}.
+Posve analogna situacija vrijedi i za èitanje poruka - nakon ¹to je poruka
+proèitana, pokazivaè se pomièe na mjesto na kojem proces oèekuje prvu sljedeæu
+poruku. Kada ovaj pokazivaè stigne do kraja svog segmenta, takoðer se vraæa
+na njegov poèetak.
+
+
+\subsection{Identif\mbox{}ikacija klasa i opisivanje njihovih meðusobnih veza}
+
+S obzirom na izneseno u prethodnom odjeljku, i na prvi pogled jasno iskaèu
+sljedeæi pojmovi iz
+\textit{realnog svijeta}:
+\textit{proces, veza}
+i
+\textit{poruka}.
+Ovi pojmovi preslikani su u klase
+\texttt{Process},
+\texttt{Connection}
+i
+\texttt{Message}\footnote{U programerskoj praksi tipièno je imenovanje
+varijabli, funkcija pa tako i korisnièkih tipova podataka na engleskom
+jeziku.}.\\
+
+Razmotrimo li klasu
+\texttt{Process}
+podrobnije, uoèavamo da je njen pojam preopæenit ¹to bi uzrokovalo njenu
+glomaznost i, u fazi implementacije, probleme. Stoga je klasa
+\texttt{Process}
+idealan kandidat za baznu klasu iz koje bi bili derivirani
+specif\mbox{}ièni
+vidovi pojma
+\textit{proces}
+sa svojim
+specif\mbox{}iènim
+detaljima. Oèito je da æe te
+specif\mbox{}iène
+klase biti
+\texttt{MasterProcess}
+i
+\texttt{SlaveProcess}.
+
+Jedna od zadaæa objekta klase
+\texttt{MasterProcess}
+je kreiranje objekata klase
+\texttt{SlaveProcess}.
+S obzirom da se ovaj postupak ne mo¾e implementirati na naèin da se odvije u 
+jednom koraku, ovi detalji kreiranja su skriveni u klasi
+\texttt{Child} koja na neki naèin predstavlja
+``prijelazno stanje''
+klase
+\texttt{SlaveProcess}.
+
+Takoðer, klasa
+\texttt{Process}
+se mo¾e dalje rasteretiti odvajanjem onog dijela funkcionalnosti koji je
+odgovoran za obradu pristiglih poruka. Ovu funkcionalnost sadr¾i klasa
+\texttt{MessageProcessor}.\\
+
+Klasa
+\texttt{Connection}
+je takoðer preopæenita s obzirom da mogu postojati dvije vrste veza izmeðu
+procesa - stoga su uvedene klase
+\texttt{SharedMem}
+i
+\texttt{TCPConnection}
+koje konkretiziraju pojam
+\textit{veze}.
+
+Dalje, promatrajuæi klasu
+\texttt{SharedMem}
+dolazimo i do klase
+\texttt{CircularPtr},
+odnosno
+\textit{cirkularnog pokazivaèa}
+èije je uvoðenje opravdano opisom u prethodnom odjeljku.
+
+Tijekom implementacije, pojavila se i potreba za uvoðenjem jo¹ jedne klase
+derivirane iz klase
+\texttt{Connection}
+u svrhu oznaèavanja veze koja je tijekom izvoðenja programa uni¹tena.
+U ovom sluèaju, rijeè je o klasi
+\texttt{Destroyed}.\\
+
+Naposljetku, za potrebe sno¹enja s pojavom iznimnih situacija (npr.~slanja
+poruka zatvorenom vezom) tijekom rada programa, stvorena je jo¹ jedna klasa
+imena
+\texttt{Exception}.\\
+
+Glavna zadaæa baznih klasa
+\texttt{Process}
+i
+\texttt{Connection}
+je
+def\mbox{}iniranje
+suèelja koje klase derivirane iz njih implementiraju, svaka na svoj naèin.
+Tako ako npr.~od objekta klase
+\texttt{Process}
+zatra¾imo odreðenu akciju, ova æe biti izvr¹ena ili na naèin kako je
+implementira klasa
+\texttt{MasterProcess}
+ili na naèin kako je implementira klasa
+\texttt{SlaveProcess},
+ovisno o tome kojoj objekt pripada.\newpage
+
+Upravo
+def\mbox{}iniran
+globalan dizajn prikazan je na
+slici~\ref{sl:c_dia}
+UML\footnote{\textit{Unif\mbox{}ied Modeling Language} - jezik namijenjen
+modeliranju kod objektno orijentiranih programskih jezika}
+dijagramom. Klasa
+\texttt{exception}
+je dio standardne biblioteke programskog jezika C++.
+
+\begin{figure}
+\begin{center}
+\includegraphics[angle = 90, height = \textheight]{c_dia}
+\end{center}
+\caption{\textit{UML class} dijagram}
+\label{sl:c_dia}
+\end{figure}
+
+
+\subsection{Opis \textit{API}-ja}
+
+S obzirom na postojeæih jedanaest klasa, opis ostalih koraka
+objektno orijentiranog dizajna za svaku od njih zauzeo bi previ¹e prostora.
+Zbog toga slijedi opis
+\textit{API}-ja,
+odnosno
+def\mbox{}iniranje
+suèelja onih klasa koje su vidljive korisniku biblioteke. Na
+slici~\ref{sl:c_dia}
+te su klase obuhvaæene iscrtkanim pravokutnikom.
+
+\subsubsection{Klasa \texttt{Process}}
+
+Metode klase
+\texttt{Process}
+su sljedeæe:
+
+\begin{itemize}
+\item
+\textit{konstruktor}
+(zadu¾en za kreiranje objekta) i
+\textit{destruktor}
+(zadu¾en za uni¹tavanje objekta) ne zahtijevaju
+daljnja poja¹njenja. Va¾no je samo napomenuti da konstruktor kao parametar
+prima pokazivaè na znakovni niz koji sadr¾i ime izvr¹ne datoteke, no
+korisnik se ne mora time optereæivati s obzirom da je za kreiranje objekta 
+zadu¾ena posebna funkcija
+\texttt{start\_new}
+o kojoj æe naknadno biti jo¹ rijeèi.
+\item
+Metoda
+\texttt{name}
+vraæa pokazivaè na znakovni niz koji sadr¾i ime izvr¹ne datoteke, a ne prima
+nikakve parametre.
+\item
+\texttt{send},
+kao ¹to samo ime ka¾e, ¹alje poruku drugom procesu. Funkcija prima dva
+parametra od kojih je prvi redni broj veze kojom se ¹alje poruka, dok je
+drugi
+\textit{referenca}
+na poruku (objekt klase
+\texttt{Message})
+koja se ¹alje. Ova metoda vraæa jednu od dvije moguæe vrijednost
+ovisno da li je poruka uspje¹no poslana ili je poku¹ana poslati vezom koja
+je u meðuvremenu uni¹tena (proces na drugoj strani veze vi¹e ne postoji).
+\item
+Metoda
+\texttt{receive}
+takoðer prima dva parametra. Prvi je broj veze s koje proces èita poruku,
+dok je drugi pokazivaè na objekt klase
+\texttt{Message}
+u koji æe pristigla poruka biti upisana.
+\texttt{receive}
+takoðer i vraæa jednu od dvije vrijednosti, ovisno da li je pristigla kakva
+poruka tom vezom prilikom poziva te funkcije ili ne.
+\item
+Tu su i dvije metode
+\texttt{start\_new}
+od kojih prva ne prima nikakav parametar i slu¾i za pokretanje procesa na
+istom raèunalu, dok druga kao parametar prima pokazivaè na znakovni niz koji
+sadr¾i ime raèunala na mre¾i na kojem æe se pokrenuti novi proces, te
+\textit{direktorij}
+s imenom izvr¹ne datoteke novog procesa.
+\item
+Metoda
+\texttt{kill},
+kao ¹to to i samo ime govori, slu¾i za
+\textit{ubijanje}
+procesa, pa kao svoj parametar prima redni broj veze s dotiènim procesom.
+\item
+\texttt{route}
+je zadu¾ena za stvaranje veze izmeðu dvaju
+\textit{slave}
+procesa. Kao svoja dva parametra prima redne brojeve veza procesa izmeðu
+kojih se ostvaruje nova veza. Ova funkcija vraæa logièku vrijednost ovisno o
+tome da li je nova veza ostvarena ili ne. Ta vraæena vrijednost ima smisla
+samo kod
+\texttt{MasterProcess}-a
+jer dok on direktno stvara novu vezu, zbog centraliziranosti, instance klase
+\texttt{SlaveProcess}
+samo podnose zahtjev
+\texttt{MasterProcess}-u
+koji ga realizira.
+\item
+\texttt{master}
+i
+\texttt{slave}
+metode vraæaju logièku vrijednost ovisno da li objekt pripada klasi
+\texttt{MasterProcess},
+odnosno klasi
+\texttt{SlaveProcess}.
+\item
+Metoda
+\texttt{loop}
+prolazi jednom kroz sve veze jednog procesa provjeravajuæi da li je stigla 
+kakva poruka bilo kojom od njih. U sluèaju da jest, ova metoda automatski 
+obraðuje pristiglu poruku. U sluèaju da nema nove poruke, funkcija ne èeka
+da se ova pojavi veæ odmah provjerava sljedeæu vezu.
+\texttt{loop}
+vraæa logièku vrijednost koja indicira da li bi u sljedeæem prolazu moglo biti
+jo¹ pristiglih poruka ili ne.
+\item
+Konaèno, metoda
+\texttt{loop\_forever}
+uvodi proces u
+\texttt{pasivno}
+stanje u kojem je njegova jedina zadaæa da prima i obraðuje pristigle poruke
+sve dok ne primi zahtjev za prestankom rada.
+\end{itemize}
+
+\textit{API}
+klase
+\texttt{Process}
+nalazi se na
+slici~\ref{sl:process}.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width = 0.7\textwidth]{Process}
+\end{center}
+\caption{\textit{API} klase \texttt{Process}}
+\label{sl:process}
+\end{figure}
+
+
+\subsubsection{Klasa \texttt{Message}}
+
+\begin{itemize}
+\item
+Klasa
+\texttt{Message}
+posjeduje èetiri konstruktora.
+Prvi,
+\textit{default}
+konstruktor prima od jednog do tri parametra. Prvi je cjelobrojni
+identif\mbox{}ikacijski
+broj poruke, drugi je pozitivan cijeli broj koji opisuje
+du¾inu poruke u bajtovima i treæi je pokazivaè na memorijsku lokaciju na
+kojoj se nalaze podaci koji æe formirati samo tijelo poruke.
+
+Drugi, takozvani
+\textit{copy}
+konstruktor je uveden zbog discipliniranosti u programiranju s obzirom na
+karakter klase.
+
+Ostali konstruktori su slièni
+\textit{copy}
+konstruktoru. Prvi od njih kao parametre prima referencu na objekt klase
+\texttt{Message} i cjelobrojnu vrijednost koja predstavlja novi ID poruke.
+Naime, ovaj konstruktor od veæ postojeæe poruke (prvog parametra) stvara
+novu poruku potpuno iste du¾ine i sadr¾aja s tim da je jedina razlika izmeðu
+njihovih
+identif\mbox{}ikacijskih
+brojeva (drugi parametar). Naredni
+\textit{copy}
+konstruktor takoðer stvara novu poruku od stare, s time da tijelo nove
+poruke sadr¾i samo jedan segment tijela stare. Dakle, ovaj konstruktor
+prima èetiri parametra. Prvi i drugi parametar su posve isti kao
+i kod prethodnog konstruktora, treæi parametar je cjeli broj koji
+predstavlja pomak u bajtovima od poèetka tijela originalne poruke, a èetvrti je
+broj bajtova koji æe èiniti tijelo nove poruke.
+\item
+Sljedeæa metoda je
+\textit{overload}-ani
+\texttt{operator=}
+koji je tu takoðer zbog discipliniranosti u programiranju.
+\item
+\texttt{copy\_data\_to}
+je funkcija zadu¾ena za kopiranje tijela poruke na novu memorijsku lokaciju
+èiju adresu korisnik prosljeðuje kao jedini parametar ove funkcije. Ova
+metoda, nakon ¹to obavi svoj zadatak, takoðer i vraæa taj pokazivaè, èime je
+postignuta sliènost sa sintaksom funkcija iz standardne biblioteke.
+\item
+\texttt{compare\_data}
+usporeðuje memorijski segment (njegova adresa je prvi parametar funkcije)
+s tijelom poruke. Usporedba se vr¹i samo za broj bajtova koji je proslijeðen
+kao drugi parametar. Ova funkcija vraæa vrijednost razlièitu od nule ako se 
+usporeðeni segmenti razlikuju, odnosno nulu, ako su segmenti jednakog sadr¾aja.
+\item
+\texttt{int\_data\_at}
+vraèa cjelobrojnu vrijednost, 
+(\textit{integer})
+koja se nalazi u tijelu poruke na onom rednom mjestu koje je jednako jedinom
+parametru funkcije.
+\item
+Metoda
+\texttt{char\_data\_at}
+jednaka je gorespomenutoj, samo ¹to vraèa jedan bajt, odnosno
+\textit{character}.
+\item
+\texttt{mid}
+metoda ne prima nikakve parametre, a daje
+identif\mbox{}ikacijski
+broj poruke.
+\item
+\texttt{len}
+takoðer ne prima parametre, a vraæa du¾inu tijela poruke u bajtovima.
+\end{itemize}
+
+\textit{API}
+klase
+\texttt{Message}
+nalazi se na
+slici~\ref{sl:Message}.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width = \textwidth]{Message}
+\end{center}
+\caption{\textit{API} klase \texttt{Message}}
+\label{sl:Message}
+\end{figure}
+
+
+\subsubsection{Klasa \texttt{Exception}}
+
+Klasa
+\texttt{Exception}
+derivirana je iz standardne klase
+\texttt{exeption}
+pa je opis njenog
+\textit{API}-ja
+ne¹to kraæi jer klasa ima svega jednu metodu (izuzmu li se konstruktor i
+destruktor).
+
+\begin{itemize}
+\item
+Konstruktor i destruktor ne iziskuju dodatna obja¹njenja. Va¾no je samo
+naglasiti da konstruktor kao svoj parametar prima pokazivaè na znakovni niz
+koji opisuje iznimnu situaciju koja se dogodila.
+\item
+Metoda
+\texttt{what}
+ne prima nikakvih parametara, a vraæa pokazivaè na znakovni niz koji daje
+opis iznimke.
+\end{itemize}
+
+\textit{API}
+klase
+\texttt{Exception}
+prikazan je na
+slici~\ref{sl:exception}.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width = 0.5\textwidth]{Exception}
+\end{center}
+\caption{\textit{API} klase \texttt{Exception}}
+\label{sl:exception}
+\end{figure}
+
+\newpage
+
+
+\section{C++ specif\mbox{}iènosti}
+\subsection{Skrivanje implementacije\\(\textit{Cheshire Cat design pattern})}
+\label{subsec:si}
+
+U svrhu potpunog skrivanja implementacije od korisnika biblioteke, te zbog
+smanjenja kompilacije tijekom razvojne faze, kori¹tene su
+\textit{handle classes}
+odnosno
+\textit{Cheshire Cat design pattern}.
+S obzirom da je ova tehnika kori¹tena pri dizajnu svih klasa biblioteke,
+zaslu¾uje kratak opis.
+Kontrola pristupa u C++-u nam omoguæava da odvojimo suèelje od
+implementacije, ali skrivanje implementacije nije potpuno - osim metoda u
+\textit{header}
+datotekama izlo¾eni su i atributi klase. Ovaj sluèaj je vidljiv na
+slici~\ref{sl:neskriveno}.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width = 0.7\textwidth]{neskriveno}
+\end{center}
+\caption{Primjer deklaracije klase u C++-u}
+\label{sl:neskriveno}
+\end{figure}
+
+Premda korisnik nije u ovom primjeru u stanju da pristupi varijablama
+\texttt{atribut1}
+i
+\texttt{atribut2},
+on ih dalje vidi. Da bi se korisnik u potpunosti rasteretio detalja
+implementacije, ovom problemu se doskoèilo na sljedeæi naèin - svi atributi 
+klase zamijenjeni su pokazivaèem na nepotpuno
+specif\mbox{}iciranu
+\textit{strukturu}
+(ili klasu) koja je
+def\mbox{}inirana
+ne vi¹e u
+\textit{header}-u
+veæ u datoteci zajedno s implementacijom. Kao ¹to je prikazano na
+slici~\ref{sl:skriveno},
+korisnik je sada svjestan samo metoda klase, pa i njegovo razumijevanje iste
+nije ometano prisutno¹æu njemu nepotrebnih detalja.
+
+\begin{figure}
+\begin{center}
+\includegraphics[width = 0.7\textwidth]{skriveno}
+\end{center}
+\caption{Primjer primjene \textit{Cheshire Cat design pattern}-a}
+\label{sl:skriveno}
+\end{figure}
